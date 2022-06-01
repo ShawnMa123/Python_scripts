@@ -1,4 +1,3 @@
-[toc]
 # Python_scripts
 
 一些Python小脚本

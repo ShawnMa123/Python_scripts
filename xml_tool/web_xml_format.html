@@ -57,12 +57,14 @@
       <input type="text" id="exportPath">
     </div>
     <div class="output" id="output"></div>
+    <button class="btn" onclick="exportFormattedXML()">Export</button>
   </div>
 
   <script>
+    var formattedXML = '';
+
     function formatXML() {
       var fileInput = document.getElementById('fileSelector');
-      var exportPathInput = document.getElementById('exportPath');
       var outputDiv = document.getElementById('output');
 
       var file = fileInput.files[0];
@@ -70,13 +72,8 @@
 
       reader.onload = function(e) {
         var xmlText = e.target.result;
-        var formattedXML = formatXMLString(xmlText);
+        formattedXML = formatXMLString(xmlText);
         outputDiv.textContent = formattedXML;
-
-        var exportPath = exportPathInput.value;
-        if (exportPath) {
-          exportFormattedXML(formattedXML, exportPath);
-        }
       };
 
       reader.readAsText(file);
@@ -91,14 +88,21 @@
       return serializer.serializeToString(xmlDoc);
     }
 
-    function exportFormattedXML(xmlString, exportPath) {
-      // Implement your logic to export the formatted XML to the specified path
-      // You can use server-side technologies like Node.js or PHP to handle the file export
-      // Here's a simple example using JavaScript:
-      var link = document.createElement('a');
-      link.href = 'data:application/xml;charset=utf-8,' + encodeURIComponent(xmlString);
-      link.download = exportPath;
-      link.click();
+    function exportFormattedXML() {
+      var exportPathInput = document.getElementById('exportPath');
+
+      var exportPath = exportPathInput.value;
+      if (exportPath && formattedXML) {
+        var blob = new Blob([formattedXML], { type: 'application/xml' });
+        var url = URL.createObjectURL(blob);
+
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = exportPath;
+        link.click();
+
+        URL.revokeObjectURL(url);
+      }
     }
   </script>
 </body>

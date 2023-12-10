@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>XML Formatter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .form-group input[type="file"] {
+      display: none;
+    }
+
+    .form-group .btn {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .output {
+      margin-top: 20px;
+      white-space: pre-wrap;
+      border: 1px solid #ccc;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>XML Formatter</h1>
+    <div class="form-group">
+      <label for="xmlFile">Select XML file:</label>
+      <input type="file" id="xmlFile" accept=".xml">
+      <button class="btn" onclick="formatXML()">Format</button>
+    </div>
+    <div class="form-group">
+      <label for="exportPath">Export path:</label>
+      <input type="text" id="exportPath">
+    </div>
+    <div class="output" id="output"></div>
+  </div>
+
+  <script>
+    function formatXML() {
+      var fileInput = document.getElementById('xmlFile');
+      var exportPathInput = document.getElementById('exportPath');
+      var outputDiv = document.getElementById('output');
+
+      var file = fileInput.files[0];
+      var reader = new FileReader();
+
+      reader.onload = function(e) {
+        var xmlText = e.target.result;
+        var formattedXML = formatXMLString(xmlText);
+        outputDiv.textContent = formattedXML;
+
+        var exportPath = exportPathInput.value;
+        if (exportPath) {
+          exportFormattedXML(formattedXML, exportPath);
+        }
+      };
+
+      reader.readAsText(file);
+    }
+
+    function formatXMLString(xmlString) {
+      // You can use a library like 'xml-formatter' to format the XML string
+      // Here's an example using the built-in XMLSerializer:
+      var parser = new DOMParser();
+      var xmlDoc = parser.parseFromString(xmlString, 'application/xml');
+      var serializer = new XMLSerializer();
+      return serializer.serializeToString(xmlDoc);
+    }
+
+    function exportFormattedXML(xmlString, exportPath) {
+      // Implement your logic to export the formatted XML to the specified path
+      // You can use server-side technologies like Node.js or PHP to handle the file export
+      // Here's a simple example using JavaScript:
+      var link = document.createElement('a');
+      link.href = 'data:application/xml;charset=utf-8,' + encodeURIComponent(xmlString);
+      link.download = exportPath;
+      link.click();
+    }
+  </script>
+</body>
+</html>

@@ -1,109 +1,28 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>XML Formatter</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    .form-group label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-
-    .form-group input[type="file"] {
-      display: none;
-    }
-
-    .form-group .btn {
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .output {
-      margin-top: 20px;
-      white-space: pre-wrap;
-      border: 1px solid #ccc;
-      padding: 10px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>XML Formatter</h1>
-    <div class="form-group">
-      <label for="xmlFile">Select XML file:</label>
-      <label class="btn" for="fileSelector">Browse</label>
-      <input type="file" id="fileSelector" accept=".xml">
-      <button class="btn" onclick="formatXML()">Format</button>
+<template>
+  <div>
+    <h1>File Selector</h1>
+    <input type="file" @change="handleFileSelect">
+    <div v-if="selectedFile">
+      <h2>Selected File:</h2>
+      <p>Name: {{ selectedFile.name }}</p>
+      <p>Type: {{ selectedFile.type }}</p>
+      <p>Size: {{ selectedFile.size }} bytes</p>
     </div>
-    <div class="form-group">
-      <label for="exportPath">Export path:</label>
-      <input type="text" id="exportPath">
-    </div>
-    <div class="output" id="output"></div>
-    <button class="btn" onclick="exportFormattedXML()">Export</button>
   </div>
+</template>
 
-  <script>
-    var formattedXML = '';
-
-    function formatXML() {
-      var fileInput = document.getElementById('fileSelector');
-      var outputDiv = document.getElementById('output');
-
-      var file = fileInput.files[0];
-      var reader = new FileReader();
-
-      reader.onload = function(e) {
-        var xmlText = e.target.result;
-        formattedXML = formatXMLString(xmlText);
-        outputDiv.textContent = formattedXML;
-      };
-
-      reader.readAsText(file);
+<script>
+export default {
+  data() {
+    return {
+      selectedFile: null
+    };
+  },
+  methods: {
+    handleFileSelect(event) {
+      const file = event.target.files[0];
+      this.selectedFile = file;
     }
-
-    function formatXMLString(xmlString) {
-      // You can use a library like 'xml-formatter' to format the XML string
-      // Here's an example using the built-in XMLSerializer:
-      var parser = new DOMParser();
-      var xmlDoc = parser.parseFromString(xmlString, 'application/xml');
-      var serializer = new XMLSerializer();
-      return serializer.serializeToString(xmlDoc);
-    }
-
-    function exportFormattedXML() {
-      var exportPathInput = document.getElementById('exportPath');
-
-      var exportPath = exportPathInput.value;
-      if (exportPath && formattedXML) {
-        var blob = new Blob([formattedXML], { type: 'application/xml' });
-        var url = URL.createObjectURL(blob);
-
-        var link = document.createElement('a');
-        link.href = url;
-        link.download = exportPath;
-        link.click();
-
-        URL.revokeObjectURL(url);
-      }
-    }
-  </script>
-</body>
-</html>
+  }
+};
+</script>

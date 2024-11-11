@@ -6,11 +6,20 @@
     <style>
         .healthy { color: green; }
         .unhealthy { color: red; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid black; text-align: left; padding: 8px; }
+        th { background-color: #f2f2f2; }
     </style>
 </head>
 <body>
     <h1>Service Health Dashboard</h1>
-    <div id="services"></div>
+    <table id="services">
+        <tr>
+            <th>Service</th>
+            <th>Status</th>
+            <th>Last Checked</th>
+</tr>
+    </table>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 </body>
 </html>

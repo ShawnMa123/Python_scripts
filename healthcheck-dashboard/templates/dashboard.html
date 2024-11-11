@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Service Health Dashboard</title>
+    <style>
+        .healthy { color: green; }
+        .unhealthy { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Service Health Dashboard</h1>
+    <div id="services"></div>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

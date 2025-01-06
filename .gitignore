@@ -2,3 +2,4 @@
 /request-client/tests/
 
 **/*.log
+.codegpt

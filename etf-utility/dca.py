@@ -24,8 +24,8 @@ def calculate_dca_returns(ticker, start_date, end_date, weekly_investment, trans
     except Exception as e:
         print(f"Error downloading data: {e}")
         return None
-
     investment_dates = pd.date_range(start=start_date, end=end_date, freq='W-TUE')
+    # investment_dates = pd.date_range(start=start_date, end=end_date, freq='3ME')
     investment_dates = [date for date in investment_dates if date in data.index]
 
     portfolio_value = []
@@ -80,7 +80,7 @@ def calculate_dca_returns(ticker, start_date, end_date, weekly_investment, trans
     plt.figure(figsize=(12, 8))
     plt.plot(portfolio_df.index, portfolio_df['Portfolio Value'], label='Portfolio Value')
     plt.plot(portfolio_df.index, portfolio_df['Net Investment'], label='Net Investment', linestyle='--')
-    plt.title(f'DCA Portfolio Value for {ticker} (Incl. Fee, Total Return: {total_return_rate:.2f}%)')
+    plt.title(f'Portfolio Value for {ticker} (Incl. Fee, Total Return: {total_return_rate:.2f}%)')
     plt.xlabel('Date')
     plt.ylabel('Value in USD')
     plt.grid(True)
@@ -95,9 +95,9 @@ def calculate_dca_returns(ticker, start_date, end_date, weekly_investment, trans
     return yearly_returns
 
 # Example usage:
-ticker = 'QQQM'
-start_date = '2020-01-01'
-end_date = '2024-09-23'
+ticker = 'JEPI'
+start_date = '2021-01-01'
+end_date = '2024-12-20'
 weekly_investment = 50
 transaction_fee = 0.35
 

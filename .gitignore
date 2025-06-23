@@ -4,3 +4,5 @@
 **/*.log
 .codegpt
 /docker_utility/
+/trade/env_lib/
+/trade/.env

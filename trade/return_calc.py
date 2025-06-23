@@ -1,7 +1,37 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import pandas as pd
 import matplotlib.pyplot as plt
-from longport.openapi import QuoteContext, Config, Period, AdjustType
+from longport.openapi import QuoteContext, Config, Period, AdjustType, Market
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+
+
+def get_trading_days(start_date, end_date, chunk_size=365):
+    """
+    Retrieves all trading days within the specified date range.
+    Splits the date range into smaller chunks to avoid exceeding API limits.
+    """
+    ctx = QuoteContext(Config.from_env())  # Initialize QuoteContext
+    trading_days = []
+
+    current_start = start_date
+    while current_start < end_date:
+        # Define the end of the current chunk
+        current_end = current_start + timedelta(days=chunk_size)
+        if current_end > end_date:
+            current_end = end_date
+
+        # Fetch trading days for the current chunk
+        try:
+            chunk = ctx.trading_days(Market.US, current_start, current_end)
+            trading_days.extend([date.fromisoformat(day) for day in chunk])
+        except Exception as e:
+            print(f"Error fetching trading days for {current_start} to {current_end}: {e}")
+
+        # Move to the next chunk
+        current_start = current_end + timedelta(days=1)
+
+    return trading_days
 
 
 def get_price_on_date(ticker, target_date):
@@ -9,10 +39,6 @@ def get_price_on_date(ticker, target_date):
     Retrieves the closing price of a stock on a specific date using QuoteContext.
     """
     ctx = QuoteContext(Config.from_env())  # Initialize QuoteContext
-
-    # Convert the target_date string to a datetime.date object
-    target_date = datetime.strptime(target_date, '%Y-%m-%d').date()
-
     candlesticks = ctx.history_candlesticks_by_date(
         symbol=ticker,
         period=Period.Day,  # Daily candlesticks
@@ -27,29 +53,56 @@ def get_price_on_date(ticker, target_date):
         return None
 
 
+def fetch_prices_concurrently(ticker, dates):
+    """
+    Fetches prices for multiple dates concurrently using ThreadPoolExecutor.
+    Respects the API rate limits: no more than 5 concurrent requests and no more than 10 requests per second.
+    """
+    prices = {}
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = []
+        for i, date in enumerate(dates):
+            # Throttle to ensure no more than 10 requests per second
+            if i % 10 == 0 and i != 0:
+                time.sleep(1)  # Wait 1 second after every 10 requests
+            future = executor.submit(get_price_on_date, ticker, date)
+            futures.append((date, future))
+
+        for date, future in futures:
+            try:
+                prices[date] = future.result()
+            except Exception as e:
+                print(f"Error fetching price for {date}: {e}")
+                prices[date] = None
+
+    return prices
+
+
 def calculate_dca_returns(ticker, start_date, end_date, weekly_investment, transaction_fee):
     """
     Calculates and plots the returns of a Dollar-Cost Averaging (DCA) investment strategy,
     including yearly and total returns.
-
-    Args:
-        ticker (str): The stock ticker symbol (e.g., "VOO").
-        start_date (str): The start date for the investment period (e.g., "2018-01-01").
-        end_date (str): The end date for the investment period (e.g., "2024-09-23").
-        weekly_investment (float): The amount to invest each week.
-        transaction_fee (float): The transaction fee per purchase.
-
-    Returns:
-        pandas.DataFrame or None: DataFrame containing yearly returns, or None if an error occurs.
     """
-    investment_dates = pd.date_range(start=start_date, end=end_date, freq='W-TUE')
+    # Convert start_date and end_date strings to datetime.date objects
+    start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+    end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+    # Get all trading days within the date range
+    trading_days = get_trading_days(start_date, end_date)
+
+    # Filter for weekly investment dates (every Tuesday)
+    investment_dates = [day for day in trading_days if day.weekday() == 1]  # Tuesday = 1
+    investment_dates_str = [day.strftime('%Y-%m-%d') for day in investment_dates]
+
+    # Fetch prices for all trading dates concurrently
+    prices = fetch_prices_concurrently(ticker, investment_dates_str)
 
     portfolio_value = []
     net_investment = []
     shares = 0
 
-    for i, date in enumerate(investment_dates):
-        price = get_price_on_date(ticker, date.strftime('%Y-%m-%d'))
+    for date in investment_dates_str:
+        price = prices.get(date)
         if price is None:
             print(f"Skipping investment on {date} due to missing data.")
             continue
@@ -59,7 +112,7 @@ def calculate_dca_returns(ticker, start_date, end_date, weekly_investment, trans
         shares += shares_bought
         current_value = shares * price
         portfolio_value.append(current_value)
-        net_investment.append((i + 1) * weekly_investment)
+        net_investment.append((len(portfolio_value)) * weekly_investment)
 
     if not portfolio_value:
         print("No investment dates found within the given range.")
@@ -113,9 +166,9 @@ def calculate_dca_returns(ticker, start_date, end_date, weekly_investment, trans
 
 
 # Example usage:
-ticker = 'BRK.B.US'  # Use the appropriate ticker format for your API
-start_date = '2025-01-01'
-end_date = '2025-01-23'
+ticker = 'TSLA.US'  # Use the appropriate ticker format for your API
+start_date = '2020-01-01'
+end_date = '2020-09-23'
 weekly_investment = 50
 transaction_fee = 0.35
 
